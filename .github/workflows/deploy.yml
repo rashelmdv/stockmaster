@@ -1,0 +1,55 @@
+name: Deploy StockMaster
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm install
+
+    - name: Run backend tests
+      run: |
+        cd backend
+        npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Deploy to AWS EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.AWS_HOST }}
+        username: ${{ secrets.AWS_USER }}
+        key: ${{ secrets.AWS_SSH_KEY }}
+        script: |
+          # Entrar a la carpeta del proyecto
+          cd /home/ubuntu/stockmaster || git clone https://github.com/${{ github.repository }}.git /home/ubuntu/stockmaster
+          
+          # Actualizar el código
+          cd /home/ubuntu/stockmaster
+          git pull origin main
+          
+          # Bajar y volver a levantar los contenedores
+          docker-compose down
+          docker-compose up -d --build
+          
+          # Mostrar el estado
+          docker-compose ps

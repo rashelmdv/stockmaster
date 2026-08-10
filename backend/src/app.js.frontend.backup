@@ -1,0 +1,139 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+
+function App() {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [newProduct, setNewProduct] = useState({ 
+        name: '', 
+        description: '', 
+        price: '', 
+        quantity: '' 
+    });
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${API_URL}/products`);
+            setProducts(response.data);
+            setError(null);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            setError('Error al cargar los productos');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(`${API_URL}/products`, newProduct);
+            await fetchProducts();
+            setNewProduct({ name: '', description: '', price: '', quantity: '' });
+        } catch (error) {
+            console.error('Error creating product:', error);
+            setError('Error al crear el producto');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+            try {
+                await axios.delete(`${API_URL}/products/${id}`);
+                await fetchProducts();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                setError('Error al eliminar el producto');
+            }
+        }
+    };
+
+    if (loading) return <div className="loading">🔄 Cargando productos...</div>;
+
+    return (
+        <div className="App">
+            <header className="header">
+                <h1>📦 StockMaster - Gestión de Inventarios</h1>
+                <p className="subtitle">Sistema de gestión de productos</p>
+            </header>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <div className="container">
+                <div className="form-container">
+                    <h2>➕ Agregar Producto</h2>
+                    <form onSubmit={handleSubmit}>
+                        <input
+                            type="text"
+                            placeholder="Nombre del producto"
+                            value={newProduct.name}
+                            onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                            required
+                        />
+                        <input
+                            type="text"
+                            placeholder="Descripción"
+                            value={newProduct.description}
+                            onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                        />
+                        <div className="form-row">
+                            <input
+                                type="number"
+                                placeholder="Precio"
+                                value={newProduct.price}
+                                onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                                required
+                                step="0.01"
+                            />
+                            <input
+                                type="number"
+                                placeholder="Cantidad"
+                                value={newProduct.quantity}
+                                onChange={(e) => setNewProduct({...newProduct, quantity: e.target.value})}
+                                required
+                            />
+                        </div>
+                        <button type="submit">Agregar Producto</button>
+                    </form>
+                </div>
+
+                <div className="products-container">
+                    <h2>📊 Lista de Productos ({products.length})</h2>
+                    <div className="products-grid">
+                        {products.length === 0 ? (
+                            <p className="no-products">No hay productos registrados</p>
+                        ) : (
+                            products.map(product => (
+                                <div key={product.id} className="product-card">
+                                    <h3>{product.name}</h3>
+                                    <p className="description">{product.description || 'Sin descripción'}</p>
+                                    <div className="product-details">
+                                        <span className="price">💰 ${product.price}</span>
+                                        <span className="quantity">📦 Stock: {product.quantity}</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleDelete(product.id)}
+                                        className="delete-btn"
+                                    >
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default App;
