@@ -17,7 +17,7 @@ COPY frontend/ frontend/
 RUN cd frontend && npm run build
 
 # Configurar Nginx
-COPY nginx/nginx.conf /etc/nginx/http.d/default.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80 3000
 
