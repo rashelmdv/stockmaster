@@ -19,9 +19,7 @@ RUN cd frontend && npm run build
 # Configurar Nginx
 COPY nginx/nginx.conf /etc/nginx/http.d/default.conf
 
-# Script de inicio
-RUN echo '#!/bin/sh\nnginx -g "daemon off;" &\ncd /app/backend\nnode src/app.js' > /start.sh && chmod +x /start.sh
-
 EXPOSE 80 3000
 
-CMD ["/start.sh"]
+# ELIMINAMOS start.sh y usamos CMD directamente:
+CMD ["/bin/sh", "-c", "nginx -g 'daemon off;' & cd /app/backend && node src/app.js"]
