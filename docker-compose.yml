@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: stockmaster
     ports:
       - "5432:5432"
-    networks:
-      - app-network
 
   backend:
     build:
@@ -22,8 +20,6 @@ services:
       PORT: 3000
     depends_on:
       - db
-    networks:
-      - app-network
     ports:
       - "3000:3000"
 
@@ -34,8 +30,6 @@ services:
     container_name: stockmaster-frontend
     depends_on:
       - backend
-    networks:
-      - app-network
     ports:
       - "3001:80"
     restart: unless-stopped
@@ -52,10 +46,4 @@ services:
     depends_on:
       - backend
       - frontend
-    networks:
-      - app-network
     restart: unless-stopped
-
-networks:
-  app-network:
-    driver: bridge
