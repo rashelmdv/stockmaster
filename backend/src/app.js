@@ -7,23 +7,22 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+// 🔥 CAMBIO AQUÍ: Permitir cualquier origen (CORS)
+app.use(cors({
+  origin: '*'
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 1. CONFIGURACIÓN DE LA BASE DE DATOS
-// Usamos la variable de entorno que configuraste en Railpack
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
 // 2. CREAR LAS TABLAS Y DATOS AUTOMÁTICAMENTE AL ARRANCAR
-// Esta función se ejecuta una sola vez cuando el servidor inicia
 const initDatabase = async () => {
   try {
     console.log('🔄 Conectando a la base de datos y creando tablas...');
-    
-    // Ejecutamos todo tu script SQL aquí mismo
     await pool.query(`
       CREATE TABLE IF NOT EXISTS products (
           id SERIAL PRIMARY KEY,
@@ -34,45 +33,33 @@ const initDatabase = async () => {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
-      -- Insertar datos de ejemplo (solo si la tabla está vacía)
       INSERT INTO products (name, description, price, quantity)
       SELECT 'Laptop Pro', 'Laptop de última generación con 16GB RAM y SSD 512GB', 1299.99, 10
       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Laptop Pro');
-
       INSERT INTO products (name, description, price, quantity)
       SELECT 'Mouse Wireless', 'Mouse ergonómico inalámbrico con batería recargable', 29.99, 50
       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Mouse Wireless');
-
       INSERT INTO products (name, description, price, quantity)
       SELECT 'Teclado Mecánico', 'Teclado mecánico con retroiluminación RGB y switches azules', 89.99, 30
       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Teclado Mecánico');
-
       INSERT INTO products (name, description, price, quantity)
       SELECT 'Monitor 4K', 'Monitor 4K de 27 pulgadas con HDR y 144Hz', 399.99, 15
       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Monitor 4K');
-
       INSERT INTO products (name, description, price, quantity)
       SELECT 'Disco SSD 1TB', 'Disco SSD externo USB-C 1TB', 149.99, 25
       WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = 'Disco SSD 1TB');
-
       CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
       CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
       CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);
     `);
-
-    console.log('✅ Base de datos inicializada correctamente (tablas y datos creados).');
+    console.log('✅ Base de datos inicializada correctamente.');
   } catch (error) {
-    console.error('❌ ERROR FATAL: No se pudo conectar a la base de datos:', error.message);
-    // Opcional: detener el proceso si no hay base de datos
-    // process.exit(1); 
+    console.error('❌ ERROR FATAL:', error.message);
   }
 };
 
-// Inicializar la base de datos antes de arrancar el servidor
 initDatabase();
 
-// Ruta de health check (para que Railpack sepa que está vivo)
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
@@ -81,7 +68,6 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Ruta raíz
 app.get('/', (req, res) => {
     res.json({
         name: 'StockMaster API',
@@ -90,7 +76,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// 3. NUEVA RUTA DE PRODUCTOS (TRAYENDO DATOS REALES DE LA BD)
 app.get('/api/products', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM products ORDER BY id ASC');
@@ -101,7 +86,6 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
-// 4. RUTA PARA CREAR UN NUEVO PRODUCTO (EJEMPLO EXTRA)
 app.post('/api/products', async (req, res) => {
     const { name, description, price, quantity } = req.body;
     try {
@@ -116,7 +100,6 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// Iniciar servidor
 app.listen(PORT, () => {
     console.log('🚀 Servidor corriendo en puerto:', PORT);
 });
