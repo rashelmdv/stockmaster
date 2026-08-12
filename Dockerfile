@@ -9,12 +9,11 @@ COPY backend/package*.json ./
 RUN npm install
 COPY backend/ .
 
-# Preparar frontend
+# Preparar frontend (SOLO PARA INSTALAR DEPENDENCIAS, NO PARA CONSTRUIR)
 WORKDIR /app
 COPY frontend/package*.json frontend/
 RUN cd frontend && npm install
 COPY frontend/ frontend/
-RUN cd frontend && npm run build
 
 # Configurar Nginx
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
