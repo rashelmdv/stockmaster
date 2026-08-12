@@ -1,7 +1,8 @@
 ﻿import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+// ✅ TU API DE RAILWAY YA ESTÁ AQUÍ PUESTA
+const API_URL = 'https://stockmaster-production-2043.up.railway.app/api';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -16,12 +17,17 @@ function App() {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/products`);
+      
+      if (!response.ok) {
+        throw new Error(`Error del servidor: ${response.status}`);
+      }
+
       const data = await response.json();
       setProducts(data);
       setError(null);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setError('Error al cargar los productos');
+      setError('Error al cargar los productos. Verifica la conexión con el servidor.');
     } finally {
       setLoading(false);
     }
